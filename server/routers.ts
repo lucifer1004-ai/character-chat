@@ -38,7 +38,7 @@ export const appRouter = router({
           description: input.description,
           systemPrompt: input.systemPrompt,
           avatarUrl: input.avatarUrl,
-          isPublic: input.isPublic,
+          isPublic: input.isPublic ? 1 : 0,
         });
         return { id };
       }),
