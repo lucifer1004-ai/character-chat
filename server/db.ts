@@ -1,6 +1,23 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import {
+  InsertUser,
+  users,
+  characters,
+  InsertCharacter,
+  characterKnowledge,
+  InsertCharacterKnowledge,
+  conversations,
+  InsertConversation,
+  messages,
+  InsertMessage,
+  groupChats,
+  InsertGroupChat,
+  groupChatParticipants,
+  InsertGroupChatParticipant,
+  groupChatMessages,
+  InsertGroupChatMessage,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +106,163 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Character queries
+export async function createCharacter(data: InsertCharacter) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(characters).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getCharacterById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(characters).where(eq(characters.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getUserCharacters(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(characters).where(eq(characters.userId, userId));
+}
+
+export async function getPublicCharacters() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(characters).where(eq(characters.isPublic, 1));
+}
+
+export async function updateCharacter(id: number, data: Partial<InsertCharacter>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(characters).set(data).where(eq(characters.id, id));
+}
+
+export async function deleteCharacter(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(characters).where(eq(characters.id, id));
+}
+
+// Character knowledge queries
+export async function addCharacterKnowledge(data: InsertCharacterKnowledge) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(characterKnowledge).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getCharacterKnowledge(characterId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(characterKnowledge).where(eq(characterKnowledge.characterId, characterId));
+}
+
+export async function deleteCharacterKnowledge(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(characterKnowledge).where(eq(characterKnowledge.id, id));
+}
+
+// Conversation queries
+export async function createConversation(data: InsertConversation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(conversations).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getUserConversations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(conversations).where(eq(conversations.userId, userId));
+}
+
+export async function getConversationById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(conversations).where(eq(conversations.id, id)).limit(1);
+  return result[0];
+}
+
+export async function deleteConversation(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(conversations).where(eq(conversations.id, id));
+}
+
+// Message queries
+export async function addMessage(data: InsertMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(messages).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getConversationMessages(conversationId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(messages).where(eq(messages.conversationId, conversationId));
+}
+
+// Group chat queries
+export async function createGroupChat(data: InsertGroupChat) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(groupChats).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getUserGroupChats(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(groupChats).where(eq(groupChats.userId, userId));
+}
+
+export async function getGroupChatById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(groupChats).where(eq(groupChats.id, id)).limit(1);
+  return result[0];
+}
+
+export async function deleteGroupChat(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(groupChats).where(eq(groupChats.id, id));
+}
+
+// Group chat participant queries
+export async function addGroupChatParticipant(data: InsertGroupChatParticipant) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(groupChatParticipants).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getGroupChatParticipants(groupChatId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(groupChatParticipants).where(eq(groupChatParticipants.groupChatId, groupChatId));
+}
+
+export async function removeGroupChatParticipant(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(groupChatParticipants).where(eq(groupChatParticipants.id, id));
+}
+
+// Group chat message queries
+export async function addGroupChatMessage(data: InsertGroupChatMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(groupChatMessages).values(data);
+  return Number((result as any)[0].insertId);
+}
+
+export async function getGroupChatMessages(groupChatId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(groupChatMessages).where(eq(groupChatMessages.groupChatId, groupChatId));
+}
