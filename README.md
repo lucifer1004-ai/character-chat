@@ -35,7 +35,7 @@
 ### 前置要求
 
 1. **Vercel 账号**：用于部署前端
-2. **Supabase 账号**：用于 PostgreSQL 数据库（或使用其他 MySQL/PostgreSQL 提供商）
+2. **Supabase 账号**：用于 PostgreSQL 数据库
 3. **环境变量**：需要配置以下环境变量
 
 ### 环境变量配置
@@ -43,8 +43,8 @@
 在 Vercel 项目设置中配置以下环境变量：
 
 ```bash
-# 数据库连接
-DATABASE_URL=mysql://user:password@host:port/database
+# 数据库连接（Supabase PostgreSQL）
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 
 # Manus OAuth（如果使用 Manus 平台）
 JWT_SECRET=your-jwt-secret
@@ -86,20 +86,29 @@ VITE_APP_LOGO=https://your-logo-url.com/logo.png
 
 ### Supabase 数据库设置
 
-1. **创建 Supabase 项目**
-   - 登录 Supabase
-   - 创建新项目
-   - 获取数据库连接字符串
+项目已配置使用 Supabase PostgreSQL 数据库。
 
-2. **运行数据库迁移**
-   ```bash
-   # 本地连接到 Supabase 数据库
-   DATABASE_URL="postgresql://..." pnpm db:push
-   ```
+**Supabase 项目信息：**
+- 项目 ID: `ccmrlttwxvdtvkalyixm`
+- 区域: `ap-northeast-1` (东京)
+- 数据库主机: `db.ccmrlttwxvdtvkalyixm.supabase.co`
+- 项目 URL: https://ccmrlttwxvdtvkalyixm.supabase.co
 
-3. **配置连接池**（推荐）
-   - 使用 Supabase 的连接池 URL
-   - 格式：`postgresql://[user]:[password]@[host]:6543/[database]?pgbouncer=true`
+**获取连接字符串：**
+1. 访问 [Supabase Dashboard](https://supabase.com/dashboard/project/ccmrlttwxvdtvkalyixm/settings/database)
+2. 在 "Connection string" 部分选择 "Pooler" (推荐用于 Serverless)
+3. 复制连接字符串并设置为 `DATABASE_URL` 环境变量
+
+**数据库 Schema：**
+数据库表已通过迁移创建，包括：
+- `users` - 用户信息
+- `characters` - AI 角色
+- `characterKnowledge` - 角色知识库
+- `conversations` - 一对一对话
+- `messages` - 对话消息
+- `groupChats` - 群聊
+- `groupChatParticipants` - 群聊参与者
+- `groupChatMessages` - 群聊消息
 
 ### 本地开发
 

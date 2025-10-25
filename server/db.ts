@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   InsertUser,
   users,
@@ -21,12 +22,14 @@ import {
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _client: ReturnType<typeof postgres> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -85,7 +88,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -110,8 +114,8 @@ export async function getUserByOpenId(openId: string) {
 export async function createCharacter(data: InsertCharacter) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(characters).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(characters).values(data).returning();
+  return result[0].id;
 }
 
 export async function getCharacterById(id: number) {
@@ -130,7 +134,7 @@ export async function getUserCharacters(userId: number) {
 export async function getPublicCharacters() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(characters).where(eq(characters.isPublic, 1));
+  return db.select().from(characters).where(eq(characters.isPublic, true));
 }
 
 export async function updateCharacter(id: number, data: Partial<InsertCharacter>) {
@@ -149,8 +153,8 @@ export async function deleteCharacter(id: number) {
 export async function addCharacterKnowledge(data: InsertCharacterKnowledge) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(characterKnowledge).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(characterKnowledge).values(data).returning();
+  return result[0].id;
 }
 
 export async function getCharacterKnowledge(characterId: number) {
@@ -169,8 +173,8 @@ export async function deleteCharacterKnowledge(id: number) {
 export async function createConversation(data: InsertConversation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(conversations).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(conversations).values(data).returning();
+  return result[0].id;
 }
 
 export async function getUserConversations(userId: number) {
@@ -196,8 +200,8 @@ export async function deleteConversation(id: number) {
 export async function addMessage(data: InsertMessage) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(messages).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(messages).values(data).returning();
+  return result[0].id;
 }
 
 export async function getConversationMessages(conversationId: number) {
@@ -210,8 +214,8 @@ export async function getConversationMessages(conversationId: number) {
 export async function createGroupChat(data: InsertGroupChat) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(groupChats).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(groupChats).values(data).returning();
+  return result[0].id;
 }
 
 export async function getUserGroupChats(userId: number) {
@@ -237,8 +241,8 @@ export async function deleteGroupChat(id: number) {
 export async function addGroupChatParticipant(data: InsertGroupChatParticipant) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(groupChatParticipants).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(groupChatParticipants).values(data).returning();
+  return result[0].id;
 }
 
 export async function getGroupChatParticipants(groupChatId: number) {
@@ -257,8 +261,8 @@ export async function removeGroupChatParticipant(id: number) {
 export async function addGroupChatMessage(data: InsertGroupChatMessage) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(groupChatMessages).values(data);
-  return Number((result as any)[0].insertId);
+  const result = await db.insert(groupChatMessages).values(data).returning();
+  return result[0].id;
 }
 
 export async function getGroupChatMessages(groupChatId: number) {

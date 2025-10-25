@@ -38,7 +38,7 @@ export const appRouter = router({
           description: input.description,
           systemPrompt: input.systemPrompt,
           avatarUrl: input.avatarUrl,
-          isPublic: input.isPublic ? 1 : 0,
+          isPublic: input.isPublic,
         });
         return { id };
       }),
@@ -55,10 +55,7 @@ export const appRouter = router({
         }
       }
       
-      return allCharacters.map(c => ({
-        ...c,
-        isPublic: c.isPublic === 1,
-      }));
+      return allCharacters;
     }),
 
     get: protectedProcedure
@@ -66,10 +63,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const character = await db.getCharacterById(input.id);
         if (!character) return null;
-        return {
-          ...character,
-          isPublic: character.isPublic === 1,
-        };
+        return character;
       }),
 
     update: protectedProcedure
@@ -91,9 +85,6 @@ export const appRouter = router({
 
         const { id, ...updateData } = input;
         const dbUpdateData: any = { ...updateData };
-        if (updateData.isPublic !== undefined) {
-          dbUpdateData.isPublic = updateData.isPublic ? 1 : 0;
-        }
 
         await db.updateCharacter(id, dbUpdateData);
         return { success: true };
@@ -142,7 +133,7 @@ export const appRouter = router({
       .input(z.object({ characterId: z.number() }))
       .query(async ({ ctx, input }) => {
         const character = await db.getCharacterById(input.characterId);
-        if (!character || (character.userId !== ctx.user.id && character.isPublic !== 1)) {
+        if (!character || (character.userId !== ctx.user.id && !character.isPublic)) {
           throw new Error("Character not found or unauthorized");
         }
 
